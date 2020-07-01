@@ -48,3 +48,20 @@ ix.forEach(
 );
 
 console.log(ix.topN(ix.TERM("name", "j"), -1));
+
+
+outputs:
+
+{ doc: { name: 'john Crème Brulée', type: 'user' },
+  score: 2.6931471805599454 }
+{ doc: { name: 'hello world k777bb k9 bzz', type: 'user' },
+  score: 7.673976433571672 }
+{ doc: { name: 'doe' }, score: 2.6931471805599454 }
+
+
+
+and
+
+[ { name: 'john Crème Brulée', type: 'user' },
+  { name: 'jack', type: 'admin' } ]
+  
