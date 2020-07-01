@@ -1,5 +1,24 @@
 const NO_MORE = Number.MAX_VALUE;
 
+const CONSTANT = function(boost, query) {
+  this.docID = -1;
+  this.score = function(scorer) {
+    return boost;
+  };
+
+  this.next = function() {
+    return (this.docID = query.next());
+  };
+
+  this.jump = function(target) {
+    return (this.docID = query.jump(target));
+  };
+
+  this.count = function() {
+    return query.count();
+  };
+};
+
 const OR = function(...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
@@ -45,6 +64,65 @@ const OR = function(...queries) {
     for (let i = 0; i < this.length; i++) c += this[i].count();
     return c;
   };
+
+  if (queries) {
+    for (let q of queries) {
+      this.add(q);
+    }
+  }
+};
+
+const DISMAX = function(tiebreaker, ...queries) {
+  this.prototype = new Array();
+  this.push = Array.prototype.push;
+  this.docID = -1;
+  this.add = function(query) {
+    if (query) this.push(query);
+    return this;
+  };
+
+  this.next = function() {
+    let new_doc = NO_MORE;
+    for (let i = 0; i < this.length; i++) {
+      let cur_doc = this[i].docID;
+      if (cur_doc === this.docID) cur_doc = this[i].next();
+      if (cur_doc < new_doc) new_doc = cur_doc;
+    }
+    return (this.docID = new_doc);
+  };
+
+  this.jump = function(target) {
+    let new_doc = NO_MORE;
+    for (let i = 0; i < this.length; i++) {
+      let cur_doc = this[i].docID;
+      if (cur_doc < target) cur_doc = this[i].jump(target);
+      if (cur_doc < new_doc) new_doc = cur_doc;
+    }
+
+    return (this.docID = new_doc);
+  };
+
+  this.count = function() {
+    let c = 0;
+    for (let i = 0; i < this.length; i++) c += this[i].count();
+    return c;
+  };
+
+  this.score = function(scorer) {
+    let max = 0;
+    let sum = 0;
+    for (let i = 0; i < this.length; i++) {
+      if (this[i].docID === this.docID) {
+        let subScore = this[i].score(scorer);
+        if (subScore > max) {
+          max = subScore;
+        }
+        sum += subScore;
+      }
+    }
+    return max + (sum - max) * tiebreaker;
+  };
+
   if (queries) {
     for (let q of queries) {
       this.add(q);
@@ -440,13 +518,37 @@ ix.forEach(
       ix.TERM("name", "k"),
       ix.TERM("name", "hell")
     ),
-    new AND(ix.TERM("name", "ja"), ix.TERM("type", "user")),
-    ix.TERM("name", "doe")
+    new AND(ix.TERM("name", "ja"), new CONSTANT(1, ix.TERM("type", "user"))),
+    new DISMAX(ix.TERM("name", "doe"), ix.TERM("type", "user"))
   ),
   function(doc, score) {
     console.log({ doc, score });
   }
 );
 
-console.log(ix.topN(ix.TERM("name", "j"), -1));
+console.log(
+  ix.topN(
+    new DISMAX(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
+    -1
+  )
+);
+
+ix.forEach(
+  new OR(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
+  function(doc, score) {
+    console.log({ doc, score });
+  }
+);
+
+ix.forEach(
+  new DISMAX(
+    0.5,
+    ix.TERM("name", "hello"),
+    new CONSTANT(1000, ix.TERM("name", "world"))
+  ),
+  function(doc, score) {
+    console.log({ doc, score });
+  }
+);
+
 */

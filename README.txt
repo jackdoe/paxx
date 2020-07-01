@@ -20,6 +20,12 @@ let ix = new Index({
 });
 */
 
+
+let ix = new Index({
+  name: autocompleteAnalyzer,
+  type: IDanalyzer
+});
+
 ix.doIndex(
   [
     { name: "john Crème Brulée", type: "user" },
@@ -39,15 +45,38 @@ ix.forEach(
       ix.TERM("name", "k"),
       ix.TERM("name", "hell")
     ),
-    new AND(ix.TERM("name", "ja"), ix.TERM("type", "user")),
-    ix.TERM("name", "doe")
+    new AND(ix.TERM("name", "ja"), new CONSTANT(1, ix.TERM("type", "user"))),
+    new DISMAX(ix.TERM("name", "doe"), ix.TERM("type", "user"))
   ),
   function(doc, score) {
     console.log({ doc, score });
   }
 );
 
-console.log(ix.topN(ix.TERM("name", "j"), -1));
+console.log(
+  ix.topN(
+    new DISMAX(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
+    -1
+  )
+);
+
+ix.forEach(
+  new OR(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
+  function(doc, score) {
+    console.log({ doc, score });
+  }
+);
+
+ix.forEach(
+  new DISMAX(
+    0.5,
+    ix.TERM("name", "hello"),
+    new CONSTANT(1000, ix.TERM("name", "world"))
+  ),
+  function(doc, score) {
+    console.log({ doc, score });
+  }
+);
 
 
 outputs:
@@ -60,8 +89,14 @@ outputs:
 
 
 
+and (for topN)
+
+[ { name: 'hello world k777bb k9 bzz', type: 'user' } ]
+
+
 and
 
-[ { name: 'john Crème Brulée', type: 'user' },
-  { name: 'jack', type: 'admin' } ]
-  
+{ doc: { name: 'hello world k777bb k9 bzz', type: 'user' },
+  score: 5.386294361119891 }
+{ doc: { name: 'hello world k777bb k9 bzz', type: 'user' },
+  score: 1001.34657359028 }
