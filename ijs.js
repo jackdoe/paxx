@@ -237,6 +237,45 @@ const _Nnoop = function() {
   };
 };
 
+const _NspaceBetweenDigits = function() {
+  this.apply = function apply(tokens) {
+    let digitMode = false;
+    let out = "";
+    for (let i = 0; i < tokens.length; i++) {
+      let c = tokens.charAt(i);
+      let code = tokens.charCodeAt(i);
+      let isDigit = false;
+      if (code < 127) {
+        // - (dash) = 45
+        // 0 = 48
+        // 9 = 57
+        // space = 32
+        isDigit = code == 45 || (code >= 48 && code <= 57);
+        if (i == 0) {
+          digitMode = isDigit;
+          out += c;
+          continue;
+        }
+        if (code != 32) {
+          if (isDigit) {
+            if (!digitMode) {
+              digitMode = true;
+              out += " ";
+            }
+          } else {
+            if (digitMode) {
+              digitMode = false;
+              out += " ";
+            }
+          }
+        }
+      }
+      out += c;
+    }
+    return out;
+  };
+};
+
 const analyzer = function({ normalizers, indexTokenizers, searchTokenizers }) {
   this.analyzeForIndex = function(s) {
     if (!s) return [];
@@ -335,6 +374,10 @@ const Nlowercase = function() {
   return new _Nlowercase();
 };
 
+const NspaceBetweenDigits = function() {
+  return new _NspaceBetweenDigits();
+};
+
 const Nnoop = function() {
   return new _Nnoop();
 };
@@ -359,24 +402,29 @@ const tokenize = function(s, tokenizers) {
   return tokens;
 };
 
-/* example usage
+const IDanalyzer = new analyzer({
+  normalizers: [Nnoop()],
+  indexTokenizers: [Tnoop()],
+  searchTokenizers: [Tnoop()]
+});
+
+const autocompleteAnalyzer = new analyzer({
+  normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
+  indexTokenizers: [Twhitespace(), Tedge(1)],
+  searchTokenizers: [Twhitespace()]
+});
+
+/* example usage 
 
 let ix = new Index({
-  name: new analyzer({
-    normalizers: [Nlowercase(), Nunaccent()],
-    indexTokenizers: [Twhitespace(), Tedge(1)],
-    searchTokenizers: [Twhitespace()]
-  }),
-  type: new analyzer({
-    normalizers: [Nnoop()],
-    indexTokenizers: [Tnoop()],
-    searchTokenizers: [Tnoop()]
-  })
+  name: autocompleteAnalyzer,
+  type: IDanalyzer
 });
 
 ix.doIndex(
   [
-    { name: "john", type: "user" },
+    { name: "john Crème Brulée", type: "user" },
+    { name: "hello world k777bb k9 bzz", type: "user" },
     { name: "jack", type: "admin" },
     { name: "doe" }
   ],
@@ -385,6 +433,13 @@ ix.doIndex(
 
 ix.forEach(
   new OR(
+    ix.TERM("name", "creme"),
+    new AND(
+      // matches on k9 because it splits k and 9
+      ix.TERM("name", "9"),
+      ix.TERM("name", "k"),
+      ix.TERM("name", "hell")
+    ),
     new AND(ix.TERM("name", "ja"), ix.TERM("type", "user")),
     ix.TERM("name", "doe")
   ),
@@ -394,5 +449,4 @@ ix.forEach(
 );
 
 console.log(ix.topN(ix.TERM("name", "j"), -1));
-
 */

@@ -1,7 +1,7 @@
 
 let ix = new Index({
   name: new analyzer({
-    normalizers: [Nlowercase(), Nunaccent()],
+    normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
     indexTokenizers: [Twhitespace(), Tedge(1)],
     searchTokenizers: [Twhitespace()]
   }),
@@ -12,10 +12,18 @@ let ix = new Index({
   })
 });
 
+/*
+or simpler:
+let ix = new Index({
+  name: autocompleteAnalyzer,
+  type: IDanalyzer
+});
+*/
 
 ix.doIndex(
   [
-    { name: "john", type: "user" },
+    { name: "john Crème Brulée", type: "user" },
+    { name: "hello world k777bb k9 bzz", type: "user" },
     { name: "jack", type: "admin" },
     { name: "doe" }
   ],
@@ -24,6 +32,13 @@ ix.doIndex(
 
 ix.forEach(
   new OR(
+    ix.TERM("name", "creme"),
+    new AND(
+      // matches on k9 because it splits k and 9
+      ix.TERM("name", "9"),
+      ix.TERM("name", "k"),
+      ix.TERM("name", "hell")
+    ),
     new AND(ix.TERM("name", "ja"), ix.TERM("type", "user")),
     ix.TERM("name", "doe")
   ),
