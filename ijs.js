@@ -359,6 +359,8 @@ const tokenize = function(s, tokenizers) {
   return tokens;
 };
 
+/* example usage
+
 let ix = new Index({
   name: new analyzer({
     normalizers: [Nlowercase(), Nunaccent()],
@@ -371,8 +373,6 @@ let ix = new Index({
     searchTokenizers: [Tnoop()]
   })
 });
-
-/* example usage
 
 ix.doIndex(
   [
