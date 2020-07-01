@@ -61,6 +61,8 @@ outputs:
 
 ## queries
 
+NB: the queries is statefull, and can not be reused, you must create one query per request
+
 * TERM
 
 ```
@@ -162,6 +164,9 @@ ix.forEach(
 ## Index
 
 create inverted index (which is a handy way to store the postings lists and create term queries)
+
+to create an index you need to pass per-field analyzer, e.g. for the 'name' field you could use autocomplete analyzer, but for the 'type' field you could use ID analyzer (noop)
+
 ```
 let ix = new Index({
   name: analyzers.autocompleteAnalyzer,
@@ -182,6 +187,8 @@ ix.doIndex(
 
 ```
 
+create a term query out of a field: `ix.TERM("field", "token")` e.g. `ix.TERM("name","john")`
+
 ## analyzers
 
 analyzer is a group of tokenizers and normalizers
@@ -189,6 +196,14 @@ analyzer is a group of tokenizers and normalizers
 
 ```
 tokenize at index: whitespace, edge
+tokenize at search: whitespace
+normalize: lowercase, unaccent, spaceBetweenDigits
+```
+
+* Basic
+
+```
+tokenize at index: whitespace
 tokenize at search: whitespace
 normalize: lowercase, unaccent, spaceBetweenDigits
 ```

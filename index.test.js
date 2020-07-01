@@ -95,3 +95,42 @@ test("doe limit 1", () => {
   let expected = [{ name: "doe world" }];
   expect(ix.topN(query, 1)).toEqual(expected);
 });
+
+test("big index", () => {
+  let ix = new Index({
+    name: analyzers.autocompleteAnalyzer,
+    type: analyzers.IDanalyzer
+  });
+
+  let iter = 10000;
+  for (let i = 0; i < iter; i++) {
+    ix.doIndex(
+      [
+        { name: "john Crème Brulée", type: "user" },
+        { name: "john another with worse idf", type: "user" },
+        { name: "hello world k777bb k9 bzz", type: "user" },
+        { name: "jack", type: "admin" },
+        { name: "doe world" },
+        { name: "world" }
+      ],
+      ["name"]
+    );
+  }
+
+  expect(ix.topN(ix.TERM("name", "doe"), -1).length).toEqual(iter);
+  expect(ix.topN(ix.TERM("name", "world"), -1).length).toEqual(iter * 3);
+  expect(
+    ix.topN(new AND(ix.TERM("name", "world"), ix.TERM("name", "doe")), -1)
+      .length
+  ).toEqual(iter);
+
+  expect(
+    ix.topN(
+      new OR(
+        new AND(ix.TERM("name", "world"), ix.TERM("name", "doe")),
+        ix.TERM("name", "john")
+      ),
+      -1
+    ).length
+  ).toEqual(iter * 3);
+});
