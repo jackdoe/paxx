@@ -1,3 +1,8 @@
+simple inverted index search engine
+
+example usage
+
+```
 const {
   Index,
   AND,
@@ -87,3 +92,5 @@ and
   score: 5.386294361119891 }
 { doc: { name: 'hello world k777bb k9 bzz', type: 'user' },
   score: 1001.34657359028 }
+
+```
