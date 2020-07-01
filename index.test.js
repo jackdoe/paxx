@@ -5,7 +5,9 @@ const {
   TERM,
   CONSTANT,
   DISMAX,
-  analyzers
+  analyzers,
+  t,
+  n
 } = require("./index");
 
 let ix = new Index({
@@ -23,6 +25,41 @@ ix.doIndex(
   ],
   ["name"]
 );
+
+test("lowercase", () => {
+  expect(n.lowercase().apply("ABC")).toEqual("abc");
+});
+
+test("unaccent", () => {
+  expect(n.unaccent().apply("Crème Brulée")).toEqual("Creme Brulee");
+});
+
+test("space between digits", () => {
+  expect(n.spaceBetweenDigits().apply("Crème Brulée 9oz")).toEqual(
+    "Crème Brulée  9 oz"
+  );
+  expect(n.spaceBetweenDigits().apply("ab9999oz xoxo99x")).toEqual(
+    "ab 9999 oz xoxo 99 x"
+  );
+});
+
+test("whitespace", () => {
+  expect(t.whitespace().apply(["hello world"])).toEqual(["hello", "world"]);
+});
+
+test("whitespace", () => {
+  expect(t.edge(1).apply(["hello"])).toEqual([
+    "h",
+    "he",
+    "hel",
+    "hell",
+    "hello"
+  ]);
+
+  expect(t.edge(2).apply(["hello"])).toEqual(["he", "hel", "hell", "hello"]);
+
+  expect(t.edge(10).apply(["hello"])).toEqual(["hello"]);
+});
 
 test("doe", () => {
   expect(ix.topN(ix.TERM("name", "doe"), -1)).toEqual([{ name: "doe world" }]);

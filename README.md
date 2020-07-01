@@ -158,3 +158,67 @@ ix.forEach(
 );
 
 ```
+
+## Index
+
+create inverted index (which is a handy way to store the postings lists and create term queries)
+```
+let ix = new Index({
+  name: analyzers.autocompleteAnalyzer,
+  type: analyzers.IDanalyzer
+});
+
+ix.doIndex(
+  // documents to be indexed
+  [
+    { name: "john Crème Brulée", type: "user" },
+    { name: "hello world k777bb k9 bzz", type: "user" },
+    { name: "jack", type: "admin" },
+    { name: "doe" }
+  ],
+  // which fields to index (must be strings)
+  ["name", "user"]
+);
+
+```
+
+## analyzers
+
+analyzer is a group of tokenizers and normalizers
+* Autocomplete
+
+```
+tokenize at index: whitespace, edge
+tokenize at search: whitespace
+normalize: lowercase, unaccent, spaceBetweenDigits
+```
+
+
+* NOOP
+```
+tokenize at index: noop
+tokenize at search: noop
+normalize: noop
+```
+
+
+### tokenizers
+
+a tokenizer takes a string and produces tokens from that string, at the moment those are available:
+
+* whitespace: 'a b c' -> ['a','b','c']
+* noop: 'a b c' -> ['a b c']
+* edge: 'hello' -> ['h','he','hel','hell','hello']
+
+any object that has `apply([string]) -> [string]` function can be used as tokenizer
+
+### normalizers
+
+normalizes apply transformation to the string, used both at search and index time
+
+* lowercase: 'ABC' -> 'abc'
+* unaccent: 'Crème' - 'Creme'
+* space between digits: k9 -> 'k 9'
+
+any object that has `apply(string) -> string` function can be used as normalizer
+
