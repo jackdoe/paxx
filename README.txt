@@ -1,29 +1,16 @@
+const {
+  Index,
+  AND,
+  OR,
+  TERM,
+  CONSTANT,
+  DISMAX,
+  analyzers
+} = require("./index");
 
 let ix = new Index({
-  name: new analyzer({
-    normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
-    indexTokenizers: [Twhitespace(), Tedge(1)],
-    searchTokenizers: [Twhitespace()]
-  }),
-  type: new analyzer({
-    normalizers: [Nnoop()],
-    indexTokenizers: [Tnoop()],
-    searchTokenizers: [Tnoop()]
-  })
-});
-
-/*
-or simpler:
-let ix = new Index({
-  name: autocompleteAnalyzer,
-  type: IDanalyzer
-});
-*/
-
-
-let ix = new Index({
-  name: autocompleteAnalyzer,
-  type: IDanalyzer
+  name: analyzers.autocompleteAnalyzer,
+  type: analyzers.IDanalyzer
 });
 
 ix.doIndex(
