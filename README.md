@@ -27,7 +27,7 @@ ix.doIndex(
     { name: "doe" }
   ],
   // which fields to index (must be strings)
-  ["name", "user"]
+  ["name", "type"]
 );
 
 // iterate over all the matches
@@ -182,7 +182,7 @@ ix.doIndex(
     { name: "doe" }
   ],
   // which fields to index (must be strings)
-  ["name", "user"]
+  ["name", "type"]
 );
 
 ```
