@@ -1,0 +1,29 @@
+{
+  "name": "paxx",
+  "version": "1.0.0",
+  "description": "inverted index query engine (full text search)",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jackdoe/paxx.git"
+  },
+  "keywords": [
+    "full text search",
+    "fts",
+    "inverted",
+    "index",
+    "query"
+  ],
+  "author": "borislav nikolov <jack@sofialondonmoskva.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jackdoe/paxx/issues"
+  },
+  "homepage": "https://github.com/jackdoe/paxx#readme",
+  "devDependencies": {
+    "jest": "^26.1.0"
+  }
+}

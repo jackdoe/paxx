@@ -492,63 +492,34 @@ const autocompleteAnalyzer = new analyzer({
   searchTokenizers: [Twhitespace()]
 });
 
-/* example usage 
+module.exports = {
+  Index: Index,
 
-let ix = new Index({
-  name: autocompleteAnalyzer,
-  type: IDanalyzer
-});
+  NO_MORE: NO_MORE,
+  CONSTANT: CONSTANT,
+  OR: OR,
+  DISMAX: DISMAX,
+  AND: AND,
+  TERM: TERM,
 
-ix.doIndex(
-  [
-    { name: "john Crème Brulée", type: "user" },
-    { name: "hello world k777bb k9 bzz", type: "user" },
-    { name: "jack", type: "admin" },
-    { name: "doe" }
-  ],
-  ["name"]
-);
+  t: {
+    edge: Tedge,
+    noop: Tnoop,
+    whitespace: Twhitespace
+  },
+  n: {
+    lowercase: Nlowercase,
+    spaceBetweenDigits: NspaceBetweenDigits,
+    noop: Nnoop,
+    unaccent: Nunaccent
+  },
 
-ix.forEach(
-  new OR(
-    ix.TERM("name", "creme"),
-    new AND(
-      // matches on k9 because it splits k and 9
-      ix.TERM("name", "9"),
-      ix.TERM("name", "k"),
-      ix.TERM("name", "hell")
-    ),
-    new AND(ix.TERM("name", "ja"), new CONSTANT(1, ix.TERM("type", "user"))),
-    new DISMAX(ix.TERM("name", "doe"), ix.TERM("type", "user"))
-  ),
-  function(doc, score) {
-    console.log({ doc, score });
+  analyzer: analyzer,
+  normalize: normalize,
+  tokenize: tokenize,
+
+  analyzers: {
+    IDanalyzer: IDanalyzer,
+    autocompleteAnalyzer: autocompleteAnalyzer
   }
-);
-
-console.log(
-  ix.topN(
-    new DISMAX(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
-    -1
-  )
-);
-
-ix.forEach(
-  new OR(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
-  function(doc, score) {
-    console.log({ doc, score });
-  }
-);
-
-ix.forEach(
-  new DISMAX(
-    0.5,
-    ix.TERM("name", "hello"),
-    new CONSTANT(1000, ix.TERM("name", "world"))
-  ),
-  function(doc, score) {
-    console.log({ doc, score });
-  }
-);
-
-*/
+};
