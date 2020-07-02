@@ -7,12 +7,12 @@ const {
   DISMAX,
   analyzers,
   t,
-  n
+  n,
 } = require("./index");
 
 let ix = new Index({
   name: analyzers.autocompleteAnalyzer,
-  type: analyzers.IDanalyzer
+  type: analyzers.IDanalyzer,
 });
 
 ix.doIndex(
@@ -21,7 +21,7 @@ ix.doIndex(
     { name: "john another with worse idf", type: "user" },
     { name: "hello world k777bb k9 bzz", type: "user" },
     { name: "jack", type: "admin" },
-    { name: "doe world" }
+    { name: "doe world" },
   ],
   ["name"]
 );
@@ -53,7 +53,7 @@ test("whitespace", () => {
     "he",
     "hel",
     "hell",
-    "hello"
+    "hello",
   ]);
 
   expect(t.edge(2).apply(["hello"])).toEqual(["he", "hel", "hell", "hello"]);
@@ -62,36 +62,38 @@ test("whitespace", () => {
 });
 
 test("doe", () => {
-  expect(ix.topN(ix.TERM("name", "doe"), -1)).toEqual([{ name: "doe world" }]);
+  expect(ix.topN(new OR(...ix.terms("name", "doe")), -1)).toEqual([
+    { name: "doe world" },
+  ]);
 });
 
 test("doe OR john", () => {
-  let query = new OR(ix.TERM("name", "doe"), ix.TERM("name", "john"));
+  let query = new OR(...ix.terms("name", "doe"), ...ix.terms("name", "john"));
   let expected = [
     { name: "doe world" },
     { name: "john Crème Brulée", type: "user" },
-    { name: "john another with worse idf", type: "user" }
+    { name: "john another with worse idf", type: "user" },
   ];
   expect(ix.topN(query, -1)).toEqual(expected);
 });
 
 test("doe AND john ", () => {
-  let query = new AND(ix.TERM("name", "doe"), ix.TERM("name", "john"));
+  let query = new AND(...ix.terms("name", "doe"), ...ix.terms("name", "john"));
   let expected = [];
   expect(ix.topN(query, -1)).toEqual(expected);
 });
 
 test("world AND (john OR hello)", () => {
   let query = new AND(
-    ix.TERM("name", "world"),
-    new OR(ix.TERM("name", "john"), ix.TERM("name", "hello"))
+    ...ix.terms("name", "world"),
+    new OR(...ix.terms("name", "john"), ...ix.terms("name", "hello"))
   );
   let expected = [{ name: "hello world k777bb k9 bzz", type: "user" }];
   expect(ix.topN(query, -1)).toEqual(expected);
 });
 
 test("doe limit 1", () => {
-  let query = ix.TERM("name", "doe");
+  let query = new OR(...ix.terms("name", "doe"));
   let expected = [{ name: "doe world" }];
   expect(ix.topN(query, 1)).toEqual(expected);
 });
@@ -99,7 +101,7 @@ test("doe limit 1", () => {
 test("big index", () => {
   let ix = new Index({
     name: analyzers.autocompleteAnalyzer,
-    type: analyzers.IDanalyzer
+    type: analyzers.IDanalyzer,
   });
 
   let iter = 10000;
@@ -111,24 +113,28 @@ test("big index", () => {
         { name: "hello world k777bb k9 bzz", type: "user" },
         { name: "jack", type: "admin" },
         { name: "doe world" },
-        { name: "world" }
+        { name: "world" },
       ],
       ["name"]
     );
   }
 
-  expect(ix.topN(ix.TERM("name", "doe"), -1).length).toEqual(iter);
-  expect(ix.topN(ix.TERM("name", "world"), -1).length).toEqual(iter * 3);
+  expect(ix.topN(new OR(ix.terms("name", "doe")), -1).length).toEqual(iter);
+  expect(ix.topN(new OR(ix.terms("name", "world")), -1).length).toEqual(
+    iter * 3
+  );
   expect(
-    ix.topN(new AND(ix.TERM("name", "world"), ix.TERM("name", "doe")), -1)
-      .length
+    ix.topN(
+      new AND(...ix.terms("name", "world"), ...ix.terms("name", "doe")),
+      -1
+    ).length
   ).toEqual(iter);
 
   expect(
     ix.topN(
       new OR(
-        new AND(ix.TERM("name", "world"), ix.TERM("name", "doe")),
-        ix.TERM("name", "john")
+        new AND(...ix.terms("name", "world"), ...ix.terms("name", "doe")),
+        ...ix.terms("name", "john")
       ),
       -1
     ).length

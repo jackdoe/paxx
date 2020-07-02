@@ -1,34 +1,48 @@
 const NO_MORE = Number.MAX_VALUE;
 
-const CONSTANT = function(boost, query) {
+const addSubQueries = function (to, ...queries) {
+  if (queries) {
+    for (let q of queries) {
+      if (Array.isArray(q)) {
+        for (let qq of q) {
+          to.add(qq);
+        }
+      } else {
+        to.add(q);
+      }
+    }
+  }
+};
+
+const CONSTANT = function (boost, query) {
   this.docID = -1;
-  this.score = function(scorer) {
+  this.score = function (scorer) {
     return boost;
   };
 
-  this.next = function() {
+  this.next = function () {
     return (this.docID = query.next());
   };
 
-  this.jump = function(target) {
+  this.jump = function (target) {
     return (this.docID = query.jump(target));
   };
 
-  this.count = function() {
+  this.count = function () {
     return query.count();
   };
 };
 
-const OR = function(...queries) {
+const OR = function (...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
   this.docID = -1;
-  this.add = function(query) {
+  this.add = function (query) {
     if (query) this.push(query);
     return this;
   };
 
-  this.score = function(scorer) {
+  this.score = function (scorer) {
     let score = 0;
     for (let i = 0; i < this.length; i++) {
       if (this[i].docID === this.docID) {
@@ -38,7 +52,7 @@ const OR = function(...queries) {
     return score;
   };
 
-  this.next = function() {
+  this.next = function () {
     let new_doc = NO_MORE;
     for (let i = 0; i < this.length; i++) {
       let cur_doc = this[i].docID;
@@ -48,7 +62,7 @@ const OR = function(...queries) {
     return (this.docID = new_doc);
   };
 
-  this.jump = function(target) {
+  this.jump = function (target) {
     let new_doc = NO_MORE;
     for (let i = 0; i < this.length; i++) {
       let cur_doc = this[i].docID;
@@ -59,29 +73,24 @@ const OR = function(...queries) {
     return (this.docID = new_doc);
   };
 
-  this.count = function() {
+  this.count = function () {
     let c = 0;
     for (let i = 0; i < this.length; i++) c += this[i].count();
     return c;
   };
-
-  if (queries) {
-    for (let q of queries) {
-      this.add(q);
-    }
-  }
+  addSubQueries(this, ...queries);
 };
 
-const DISMAX = function(tiebreaker, ...queries) {
+const DISMAX = function (tiebreaker, ...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
   this.docID = -1;
-  this.add = function(query) {
+  this.add = function (query) {
     if (query) this.push(query);
     return this;
   };
 
-  this.next = function() {
+  this.next = function () {
     let new_doc = NO_MORE;
     for (let i = 0; i < this.length; i++) {
       let cur_doc = this[i].docID;
@@ -91,7 +100,7 @@ const DISMAX = function(tiebreaker, ...queries) {
     return (this.docID = new_doc);
   };
 
-  this.jump = function(target) {
+  this.jump = function (target) {
     let new_doc = NO_MORE;
     for (let i = 0; i < this.length; i++) {
       let cur_doc = this[i].docID;
@@ -102,13 +111,13 @@ const DISMAX = function(tiebreaker, ...queries) {
     return (this.docID = new_doc);
   };
 
-  this.count = function() {
+  this.count = function () {
     let c = 0;
     for (let i = 0; i < this.length; i++) c += this[i].count();
     return c;
   };
 
-  this.score = function(scorer) {
+  this.score = function (scorer) {
     let max = 0;
     let sum = 0;
     for (let i = 0; i < this.length; i++) {
@@ -122,25 +131,20 @@ const DISMAX = function(tiebreaker, ...queries) {
     }
     return max + (sum - max) * tiebreaker;
   };
-
-  if (queries) {
-    for (let q of queries) {
-      this.add(q);
-    }
-  }
+  addSubQueries(this, ...queries);
 };
 
-const AND = function(...queries) {
+const AND = function (...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
   this.sort = Array.prototype.sort;
   this.docID = -1;
   let lead = undefined;
 
-  this.add = function(query) {
+  this.add = function (query) {
     if (query) {
       this.push(query);
-      this.sort(function(a, b) {
+      this.sort(function (a, b) {
         return a.count() - b.count();
       });
       lead = this[0];
@@ -150,7 +154,7 @@ const AND = function(...queries) {
     return this;
   };
 
-  this._jump = function(target) {
+  this._jump = function (target) {
     if (lead === undefined || this.length == 0) return (this.docID = NO_MORE);
 
     for (let i = 1; i < this.length; i++) {
@@ -164,40 +168,37 @@ const AND = function(...queries) {
     return (this.docID = lead.docID);
   };
 
-  this.next = function() {
+  this.next = function () {
     return this._jump(lead.next());
   };
 
-  this.jump = function(target) {
+  this.jump = function (target) {
     return this._jump(lead.jump(target));
   };
 
-  this.count = function() {
+  this.count = function () {
     for (let i = 0; i < this.length; i++) return this[i].count();
     return 0;
   };
 
-  this.score = function(scorer) {
+  this.score = function (scorer) {
     let score = 0;
     for (let i = 0; i < this.length; i++) {
       score += this[i].score(scorer);
     }
     return score;
   };
-  if (queries) {
-    for (let q of queries) {
-      this.add(q);
-    }
-  }
+
+  addSubQueries(this, ...queries);
 };
 
-const TERM = function(nDocumentsInIndex, postingsList) {
+const TERM = function (nDocumentsInIndex, postingsList) {
   this.docID = -1;
   this.idf = 1 + Math.log(nDocumentsInIndex / (postingsList.length + 1));
   this.tf = 1;
   let cursor = 0;
 
-  this.update = function() {
+  this.update = function () {
     if (cursor > postingsList.length - 1) return (this.docID = NO_MORE);
 
     let docID = postingsList[cursor];
@@ -205,17 +206,17 @@ const TERM = function(nDocumentsInIndex, postingsList) {
     return (this.docID = docID);
   };
 
-  this.count = function() {
+  this.count = function () {
     return postingsList.length;
   };
 
-  this.next = function() {
+  this.next = function () {
     if (this.docID !== -1) cursor++;
 
     return this.update();
   };
 
-  this.jump = function(target) {
+  this.jump = function (target) {
     if (cursor > postingsList.length - 1) return (this.docID = NO_MORE);
 
     if (this.docID === target || target === NO_MORE)
@@ -237,18 +238,18 @@ const TERM = function(nDocumentsInIndex, postingsList) {
     return this.update();
   };
 
-  this.score = function(scorer) {
+  this.score = function (scorer) {
     return scorer(this);
   };
 };
 
-const _Tnoop = function() {
+const _Tnoop = function () {
   this.apply = function apply(tokens) {
     return tokens;
   };
 };
 
-const _Twhitespace = function() {
+const _Twhitespace = function () {
   this.apply = function apply(tokens) {
     let out = [];
     for (let token of tokens) {
@@ -273,7 +274,7 @@ const _Twhitespace = function() {
   return this;
 };
 
-const _Tedge = function(n) {
+const _Tedge = function (n) {
   if (n == 0) {
     n = 1;
   }
@@ -297,25 +298,25 @@ const _Tedge = function(n) {
   return this;
 };
 
-const _Nlowercase = function() {
+const _Nlowercase = function () {
   this.apply = function apply(s) {
     return s.toLowerCase();
   };
 };
 
-const _Nunaccent = function() {
+const _Nunaccent = function () {
   this.apply = function apply(s) {
     return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 };
 
-const _Nnoop = function() {
+const _Nnoop = function () {
   this.apply = function apply(tokens) {
     return tokens;
   };
 };
 
-const _NspaceBetweenDigits = function() {
+const _NspaceBetweenDigits = function () {
   this.apply = function apply(tokens) {
     let digitMode = false;
     let out = "";
@@ -354,27 +355,33 @@ const _NspaceBetweenDigits = function() {
   };
 };
 
-const analyzer = function({ normalizers, indexTokenizers, searchTokenizers }) {
-  this.analyzeForIndex = function(s) {
+const analyzer = function ({ normalizers, indexTokenizers, searchTokenizers }) {
+  this.analyzeForIndex = function (s) {
     if (!s) return [];
     return tokenize(normalize(s, normalizers), indexTokenizers);
   };
 
-  this.analyzeForSearch = function(s) {
+  this.analyzeForSearch = function (s) {
     if (!s) return [];
     return tokenize(normalize(s, normalizers), searchTokenizers);
   };
 };
 
-let Index = function(perFieldAnalyzer) {
+let Index = function (perFieldAnalyzer) {
   let inverted = {};
   let forward = [];
-  this.doIndex = function(documents, fields) {
+
+  this.getAnalyzer = function (field) {
+    let a = perFieldAnalyzer[field];
+    if (!a) {
+      throw new Error("no analyzer for field " + field);
+    }
+    return a;
+  };
+
+  this.doIndex = function (documents, fields) {
     for (let field of fields) {
-      let a = perFieldAnalyzer[field];
-      if (!a) {
-        throw new Error("no analyzer for field " + field);
-      }
+      let a = this.getAnalyzer(field);
       let inv = inverted[field] || (inverted[field] = {});
 
       for (let document of documents) {
@@ -389,21 +396,24 @@ let Index = function(perFieldAnalyzer) {
     }
   };
 
-  this.analyze = function(field, text) {
-    let a = perFieldAnalyzer[field];
-    if (!a) {
-      throw new Error("no analyzer for field " + field);
-    }
+  this.analyze = function (field, text) {
+    let a = this.getAnalyzer(field);
     return a.analyzeForSearch(text);
   };
 
-  this.TERM = function(field, token) {
-    let perField = (inverted[field] || {})[token] || [];
-    return new TERM(forward.length, perField);
+  this.terms = function (field, token) {
+    let out = [];
+    let a = this.getAnalyzer(field);
+    for (let t of a.analyzeForSearch(token)) {
+      let perField = (inverted[field] || {})[token] || [];
+
+      out.push(new TERM(forward.length, perField));
+    }
+    return out;
   };
 
-  this.forEach = function(query, cb) {
-    let scorer = function(term) {
+  this.forEach = function (query, cb) {
+    let scorer = function (term) {
       return 1 + term.idf;
     };
 
@@ -413,14 +423,14 @@ let Index = function(perFieldAnalyzer) {
     }
   };
 
-  this.topN = function(query, limit) {
+  this.topN = function (query, limit) {
     let scored = [];
-    this.forEach(query, function(doc, score) {
+    this.forEach(query, function (doc, score) {
       scored.push([doc, score]);
     });
 
     // fixme: use priority queue
-    scored.sort(function(a, b) {
+    scored.sort(function (a, b) {
       return b[1] - a[1];
     });
 
@@ -436,42 +446,42 @@ let Index = function(perFieldAnalyzer) {
   };
 };
 
-const Tedge = function(n) {
+const Tedge = function (n) {
   return new _Tedge(n);
 };
 
-const Tnoop = function(n) {
+const Tnoop = function (n) {
   return new _Tnoop(n);
 };
 
-const Twhitespace = function() {
+const Twhitespace = function () {
   return new _Twhitespace();
 };
 
-const Nlowercase = function() {
+const Nlowercase = function () {
   return new _Nlowercase();
 };
 
-const NspaceBetweenDigits = function() {
+const NspaceBetweenDigits = function () {
   return new _NspaceBetweenDigits();
 };
 
-const Nnoop = function() {
+const Nnoop = function () {
   return new _Nnoop();
 };
 
-const Nunaccent = function() {
+const Nunaccent = function () {
   return new _Nunaccent();
 };
 
-const normalize = function(s, normalizers) {
+const normalize = function (s, normalizers) {
   for (let n of normalizers) {
     s = n.apply(s);
   }
   return s;
 };
 
-const tokenize = function(s, tokenizers) {
+const tokenize = function (s, tokenizers) {
   let tokens = [s];
   for (let t of tokenizers) {
     let current = t.apply(tokens);
@@ -483,13 +493,13 @@ const tokenize = function(s, tokenizers) {
 const IDanalyzer = new analyzer({
   normalizers: [Nnoop()],
   indexTokenizers: [Tnoop()],
-  searchTokenizers: [Tnoop()]
+  searchTokenizers: [Tnoop()],
 });
 
 const autocompleteAnalyzer = new analyzer({
   normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
   indexTokenizers: [Twhitespace(), Tedge(1)],
-  searchTokenizers: [Twhitespace()]
+  searchTokenizers: [Twhitespace()],
 });
 
 module.exports = {
@@ -505,13 +515,13 @@ module.exports = {
   t: {
     edge: Tedge,
     noop: Tnoop,
-    whitespace: Twhitespace
+    whitespace: Twhitespace,
   },
   n: {
     lowercase: Nlowercase,
     spaceBetweenDigits: NspaceBetweenDigits,
     noop: Nnoop,
-    unaccent: Nunaccent
+    unaccent: Nunaccent,
   },
 
   analyzer: analyzer,
@@ -520,6 +530,6 @@ module.exports = {
 
   analyzers: {
     IDanalyzer: IDanalyzer,
-    autocompleteAnalyzer: autocompleteAnalyzer
-  }
+    autocompleteAnalyzer: autocompleteAnalyzer,
+  },
 };

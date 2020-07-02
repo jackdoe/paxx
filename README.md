@@ -33,15 +33,15 @@ ix.doIndex(
 // iterate over all the matches
 ix.forEach(
   new OR(
-    ix.TERM("name", "creme"),
+    ...ix.terms("name", "creme"),
     new AND(
       // matches on k9 because it splits k and 9
-      ix.TERM("name", "9"),
-      ix.TERM("name", "k"),
-      ix.TERM("name", "hell")
+      ...ix.terms("name", "9"),
+      ...ix.terms("name", "k"),
+      ...ix.terms("name", "hell")
     ),
-    new AND(ix.TERM("name", "ja"), new CONSTANT(1, ix.TERM("type", "user"))),
-    new DISMAX(ix.TERM("name", "doe"), ix.TERM("type", "user"))
+    new AND(...ix.terms("name", "ja"), new CONSTANT(1, new OR(...ix.terms("type", "user")))),
+    new DISMAX(...ix.terms("name", "doe"), ...ix.terms("type", "user"))
   ),
   // callback called with the document and its IDF score
   function(doc, score) {
@@ -127,7 +127,7 @@ returns a constant score query, that will score with whatever boost you give it,
 ```
 let limit = 2 // -1 for all matches, sorted by idf score
 let matches = ix.topN(
-  new DISMAX(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
+  new DISMAX(0.5, ...ix.terms("name", "hello"), ...ix.terms("name", "world")),
   limit
 )
 
@@ -140,7 +140,7 @@ outputs:
 
 ```
 ix.forEach(
-  new OR(0.5, ix.TERM("name", "hello"), ix.TERM("name", "world")),
+  new OR(0.5, ...ix.terms("name", "hello"), ...ix.terms("name", "world")),
   function(doc, score) {
     console.log({ doc, score });
   }
@@ -151,8 +151,8 @@ ix.forEach(
     // tiebreaker
     0.5,
     // variable argument list of queries
-    ix.TERM("name", "hello"),
-    new CONSTANT(1000, ix.TERM("name", "world"))
+    ...ix.terms("name", "hello"),
+    new CONSTANT(1000, new OR(...ix.terms("name", "world")))
   ),
   function(doc, score) {
     console.log({ doc, score });
@@ -187,7 +187,7 @@ ix.doIndex(
 
 ```
 
-create a term query out of a field: `ix.TERM("field", "token")` e.g. `ix.TERM("name","john")`
+create an array term queries out of a field: `ix.terms("field", "token")` e.g. `ix.terms("name","john")`, you can wrap those queries in AND/OR/DISMAX etc
 
 ## analyzers
 
