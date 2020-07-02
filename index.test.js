@@ -98,6 +98,12 @@ test("doe limit 1", () => {
   expect(ix.topN(query, 1)).toEqual(expected);
 });
 
+test("hello and world", () => {
+  let query = new AND(...ix.terms("name", "hello world 9k"));
+  let expected = [{ name: "hello world k777bb k9 bzz", type: "user" }];
+  expect(ix.topN(query, -1)).toEqual(expected);
+});
+
 test("big index", () => {
   let ix = new Index({
     name: analyzers.autocompleteAnalyzer,

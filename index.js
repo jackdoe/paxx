@@ -396,18 +396,14 @@ let Index = function (perFieldAnalyzer) {
     }
   };
 
-  this.analyze = function (field, text) {
-    let a = this.getAnalyzer(field);
-    return a.analyzeForSearch(text);
-  };
-
   this.terms = function (field, token) {
     let out = [];
     let a = this.getAnalyzer(field);
     for (let t of a.analyzeForSearch(token)) {
-      let perField = (inverted[field] || {})[token] || [];
-
-      out.push(new TERM(forward.length, perField));
+      let perField = (inverted[field] || {})[t] || [];
+      let term = new TERM(forward.length, perField);
+      term.debug = { field, t };
+      out.push(term);
     }
     return out;
   };

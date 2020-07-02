@@ -36,9 +36,7 @@ ix.forEach(
     ...ix.terms("name", "creme"),
     new AND(
       // matches on k9 because it splits k and 9
-      ...ix.terms("name", "9"),
-      ...ix.terms("name", "k"),
-      ...ix.terms("name", "hell")
+      ...ix.terms("name", "9k hell"),
     ),
     new AND(...ix.terms("name", "ja"), new CONSTANT(1, new OR(...ix.terms("type", "user")))),
     new DISMAX(...ix.terms("name", "doe"), ...ix.terms("type", "user"))
