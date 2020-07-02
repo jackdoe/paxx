@@ -61,7 +61,7 @@ const addSubQueries = function (to, ...queries) {
 
 const CONSTANT = function (boost, query) {
   this.docID = -1;
-  this.score = function (scorer) {
+  this.score = function () {
     return boost;
   };
 
@@ -87,11 +87,11 @@ const OR = function (...queries) {
     return this;
   };
 
-  this.score = function (scorer) {
+  this.score = function () {
     let score = 0;
     for (let i = 0; i < this.length; i++) {
       if (this[i].docID === this.docID) {
-        score += this[i].score(scorer);
+        score += this[i].score();
       }
     }
     return score;
@@ -162,12 +162,12 @@ const DISMAX = function (tiebreaker, ...queries) {
     return c;
   };
 
-  this.score = function (scorer) {
+  this.score = function () {
     let max = 0;
     let sum = 0;
     for (let i = 0; i < this.length; i++) {
       if (this[i].docID === this.docID) {
-        let subScore = this[i].score(scorer);
+        let subScore = this[i].score();
         if (subScore > max) {
           max = subScore;
         }
@@ -226,10 +226,10 @@ const AND = function (...queries) {
     return 0;
   };
 
-  this.score = function (scorer) {
+  this.score = function () {
     let score = 0;
     for (let i = 0; i < this.length; i++) {
-      score += this[i].score(scorer);
+      score += this[i].score();
     }
     return score;
   };
@@ -240,14 +240,12 @@ const AND = function (...queries) {
 const TERM = function (nDocumentsInIndex, postingsList) {
   this.docID = -1;
   this.idf = 1 + Math.log(nDocumentsInIndex / (postingsList.length + 1));
-  this.tf = 1;
   let cursor = 0;
 
   this.update = function () {
     if (cursor > postingsList.length - 1) return (this.docID = NO_MORE);
 
     let docID = postingsList[cursor];
-    this.tf = 1;
     return (this.docID = docID);
   };
 
@@ -283,8 +281,8 @@ const TERM = function (nDocumentsInIndex, postingsList) {
     return this.update();
   };
 
-  this.score = function (scorer) {
-    return scorer(this);
+  this.score = function () {
+    return 1 + this.idf;
   };
 };
 
@@ -466,12 +464,8 @@ let Index = function (perFieldAnalyzer) {
   };
 
   this.forEach = function (query, cb) {
-    let scorer = function (term) {
-      return 1 + term.idf;
-    };
-
     while (query.next() !== NO_MORE) {
-      let score = query.score(scorer);
+      let score = query.score();
       if (score > 0) cb(forward[query.docID], score);
     }
   };
