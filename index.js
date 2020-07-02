@@ -419,10 +419,10 @@ let Index = function (perFieldAnalyzer) {
     }
   };
 
-  this.topN = function (query, limit) {
+  this.topN = function (query, limit, scorer) {
     let scored = [];
     this.forEach(query, function (doc, score) {
-      scored.push([doc, score]);
+      scored.push([doc, scorer ? scorer(doc, score) : score]);
     });
 
     // fixme: use priority queue

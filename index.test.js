@@ -17,11 +17,11 @@ let ix = new Index({
 
 ix.doIndex(
   [
-    { name: "john Crème Brulée", type: "user" },
-    { name: "john another with worse idf", type: "user" },
-    { name: "hello world k777bb k9 bzz", type: "user" },
-    { name: "jack", type: "admin" },
-    { name: "doe world" },
+    { name: "john Crème Brulée", type: "user", pop: 1 },
+    { name: "john another with worse idf", type: "user", pop: 2 },
+    { name: "hello world k777bb k9 bzz", type: "user", pop: 3 },
+    { name: "jack", type: "admin", pop: 400 },
+    { name: "doe world", pop: 1000 },
   ],
   ["name"]
 );
@@ -63,16 +63,16 @@ test("whitespace", () => {
 
 test("doe", () => {
   expect(ix.topN(new OR(...ix.terms("name", "doe")), -1)).toEqual([
-    { name: "doe world" },
+    { name: "doe world", pop: 1000 },
   ]);
 });
 
 test("doe OR john", () => {
   let query = new OR(...ix.terms("name", "doe"), ...ix.terms("name", "john"));
   let expected = [
-    { name: "doe world" },
-    { name: "john Crème Brulée", type: "user" },
-    { name: "john another with worse idf", type: "user" },
+    { name: "doe world", pop: 1000 },
+    { name: "john Crème Brulée", type: "user", pop: 1 },
+    { name: "john another with worse idf", type: "user", pop: 2 },
   ];
   expect(ix.topN(query, -1)).toEqual(expected);
 });
@@ -88,20 +88,31 @@ test("world AND (john OR hello)", () => {
     ...ix.terms("name", "world"),
     new OR(...ix.terms("name", "john"), ...ix.terms("name", "hello"))
   );
-  let expected = [{ name: "hello world k777bb k9 bzz", type: "user" }];
+  let expected = [{ name: "hello world k777bb k9 bzz", type: "user", pop: 3 }];
   expect(ix.topN(query, -1)).toEqual(expected);
 });
 
 test("doe limit 1", () => {
   let query = new OR(...ix.terms("name", "doe"));
-  let expected = [{ name: "doe world" }];
+  let expected = [{ name: "doe world", pop: 1000 }];
   expect(ix.topN(query, 1)).toEqual(expected);
 });
 
 test("hello and world", () => {
   let query = new AND(...ix.terms("name", "hello world 9k"));
-  let expected = [{ name: "hello world k777bb k9 bzz", type: "user" }];
+  let expected = [{ name: "hello world k777bb k9 bzz", type: "user", pop: 3 }];
   expect(ix.topN(query, -1)).toEqual(expected);
+});
+
+test("hello and world scorer", () => {
+  let query = new AND(...ix.terms("name", "w"));
+  let expected = [{ name: "doe world", pop: 1000 }];
+
+  expect(
+    ix.topN(query, 1, function (doc, score) {
+      return doc.pop;
+    })
+  ).toEqual(expected);
 });
 
 test("big index", () => {
