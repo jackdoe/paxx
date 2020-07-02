@@ -14,8 +14,8 @@ const {
 } = require("paxx");
 
 let ix = new Index({
-  name: analyzers.autocompleteAnalyzer,
-  type: analyzers.IDanalyzer
+  name: analyzers.autocomplete,
+  type: analyzers.keyword
 });
 
 ix.doIndex(
@@ -167,8 +167,8 @@ to create an index you need to pass per-field analyzer, e.g. for the 'name' fiel
 
 ```
 let ix = new Index({
-  name: analyzers.autocompleteAnalyzer,
-  type: analyzers.IDanalyzer
+  name: analyzers.autocomplete,
+  type: analyzers.keword
 });
 
 ix.doIndex(
@@ -190,7 +190,7 @@ create an array term queries out of a field: `ix.terms("field", "token")` e.g. `
 ## analyzers
 
 analyzer is a group of tokenizers and normalizers
-* Autocomplete
+* Autocomplete (analyzers.autocomplete)
 
 ```
 tokenize at index: whitespace, edge
@@ -198,7 +198,7 @@ tokenize at search: whitespace
 normalize: lowercase, unaccent, spaceBetweenDigits
 ```
 
-* Basic
+* Basic (analyzers.basic)
 
 ```
 tokenize at index: whitespace
@@ -207,11 +207,18 @@ normalize: lowercase, unaccent, spaceBetweenDigits
 ```
 
 
-* NOOP
+* Keyword (analyzers.keyword)
 ```
 tokenize at index: noop
 tokenize at search: noop
 normalize: noop
+```
+
+* SOUNDEX (analyzers.soundex)
+```
+tokenize at index: whitespace, soundex
+tokenize at search: whitespace, soundex
+normalize: lowercase, unaccent, spaceBetweenDigits
 ```
 
 
@@ -221,6 +228,7 @@ a tokenizer takes a string and produces tokens from that string, at the moment t
 
 * whitespace: 'a b c' -> ['a','b','c']
 * noop: 'a b c' -> ['a b c']
+* soundex: 'halo hello' -> ['H400', 'H400']
 * edge: 'hello' -> ['h','he','hel','hell','hello']
 
 any object that has `apply([string]) -> [string]` function can be used as tokenizer

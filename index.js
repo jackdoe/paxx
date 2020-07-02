@@ -1,5 +1,50 @@
 const NO_MORE = Number.MAX_VALUE;
 
+// from https://gist.github.com/shawndumas/1262659
+const soundex = function (s) {
+  var a = s.toLowerCase().split(""),
+    f = a.shift(),
+    r = "",
+    codes = {
+      a: "",
+      e: "",
+      i: "",
+      o: "",
+      u: "",
+      b: 1,
+      f: 1,
+      p: 1,
+      v: 1,
+      c: 2,
+      g: 2,
+      j: 2,
+      k: 2,
+      q: 2,
+      s: 2,
+      x: 2,
+      z: 2,
+      d: 3,
+      t: 3,
+      l: 4,
+      m: 5,
+      n: 5,
+      r: 6,
+    };
+
+  r =
+    f +
+    a
+      .map(function (v, i, a) {
+        return codes[v];
+      })
+      .filter(function (v, i, a) {
+        return i === 0 ? v !== codes[f] : v !== a[i - 1];
+      })
+      .join("");
+
+  return (r + "000").slice(0, 4).toUpperCase();
+};
+
 const addSubQueries = function (to, ...queries) {
   if (queries) {
     for (let q of queries) {
@@ -274,6 +319,17 @@ const _Twhitespace = function () {
   return this;
 };
 
+const _Tsoundex = function () {
+  this.apply = function apply(tokens) {
+    let out = [];
+    for (let token of tokens) {
+      out.push(soundex(token));
+    }
+
+    return out;
+  };
+};
+
 const _Tedge = function (n) {
   if (n == 0) {
     n = 1;
@@ -294,8 +350,6 @@ const _Tedge = function (n) {
 
     return out;
   };
-
-  return this;
 };
 
 const _Nlowercase = function () {
@@ -389,7 +443,10 @@ let Index = function (perFieldAnalyzer) {
         let tokens = a.analyzeForIndex(document[field]);
         for (let token of tokens) {
           let postings = inv[token] || (inv[token] = []);
-          postings.push(did);
+          // only insert if not the same as previous, we dont count frequency
+          if (postings.length == 0 || postings[postings.length - 1] != did) {
+            postings.push(did);
+          }
         }
         forward.push(document);
       }
@@ -446,6 +503,10 @@ const Tedge = function (n) {
   return new _Tedge(n);
 };
 
+const Tsoundex = function () {
+  return new _Tsoundex();
+};
+
 const Tnoop = function (n) {
   return new _Tnoop(n);
 };
@@ -486,7 +547,7 @@ const tokenize = function (s, tokenizers) {
   return tokens;
 };
 
-const IDanalyzer = new analyzer({
+const keywordAnalyzer = new analyzer({
   normalizers: [Nnoop()],
   indexTokenizers: [Tnoop()],
   searchTokenizers: [Tnoop()],
@@ -495,6 +556,18 @@ const IDanalyzer = new analyzer({
 const autocompleteAnalyzer = new analyzer({
   normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
   indexTokenizers: [Twhitespace(), Tedge(1)],
+  searchTokenizers: [Twhitespace()],
+});
+
+const soundexAnalyzer = new analyzer({
+  normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
+  indexTokenizers: [Twhitespace(), Tsoundex()],
+  searchTokenizers: [Twhitespace(), Tsoundex()],
+});
+
+const basicAnalyzer = new analyzer({
+  normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
+  indexTokenizers: [Twhitespace()],
   searchTokenizers: [Twhitespace()],
 });
 
@@ -511,6 +584,7 @@ module.exports = {
   t: {
     edge: Tedge,
     noop: Tnoop,
+    soundex: Tsoundex,
     whitespace: Twhitespace,
   },
   n: {
@@ -525,7 +599,9 @@ module.exports = {
   tokenize: tokenize,
 
   analyzers: {
-    IDanalyzer: IDanalyzer,
-    autocompleteAnalyzer: autocompleteAnalyzer,
+    keyword: keywordAnalyzer,
+    autocomplete: autocompleteAnalyzer,
+    soundex: soundexAnalyzer,
+    basic: basicAnalyzer,
   },
 };

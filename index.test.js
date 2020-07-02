@@ -11,8 +11,8 @@ const {
 } = require("./index");
 
 let ix = new Index({
-  name: analyzers.autocompleteAnalyzer,
-  type: analyzers.IDanalyzer,
+  name: analyzers.autocomplete,
+  type: analyzers.keyword,
 });
 
 ix.doIndex(
@@ -115,10 +115,30 @@ test("hello and world scorer", () => {
   ).toEqual(expected);
 });
 
+test("soundex", () => {
+  let ix = new Index({
+    name: analyzers.soundex,
+  });
+
+  ix.doIndex(
+    [
+      { name: "john Crème Brulée" },
+      { name: "bohn" },
+      { name: "johm johm johm" },
+    ],
+    ["name"]
+  );
+
+  expect(ix.topN(new OR(ix.terms("name", "johm")), -1)).toEqual([
+    { name: "john Crème Brulée" },
+    { name: "johm johm johm" },
+  ]);
+});
+
 test("big index", () => {
   let ix = new Index({
-    name: analyzers.autocompleteAnalyzer,
-    type: analyzers.IDanalyzer,
+    name: analyzers.autocomplete,
+    type: analyzers.keyword,
   });
 
   let iter = 10000;
