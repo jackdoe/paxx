@@ -1,6 +1,12 @@
 simple inverted index search engine
 
-example usage
+good for short corpuses, such as city names, food ingredients etc, and
+especially powerfull if you have some external popularity to be used
+in combination for the scoring, wouldnt recommend to be used for
+searching long corpuses (such as news papers), where the term
+frequency is of much importance.
+
+example usage:
 
 ```
 const {
