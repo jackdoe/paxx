@@ -218,11 +218,12 @@ test("empty", () => {
 
   expect(
     ix.topN(
-      new DISMAX(0.5, new AND()),
-      new OR(),
-      new DISMAX(0.1),
-      -1,
-      new TERM(0, [])
+      new OR(
+        new DISMAX(0.5, new AND()),
+        new OR(),
+        new DISMAX(0.1),
+        new TERM(0, [])
+      )
     )
   ).toEqual([]);
 });
