@@ -245,6 +245,7 @@ normalizes apply transformation to the string, used both at search and index tim
 
 * lowercase: 'ABC' -> 'abc'
 * unaccent: 'Crème' - 'Creme'
+* removeNonAlphanumeric: 'a/b/c' -> 'a b c'
 * space between digits: k9 -> 'k 9'
 
 any object that has `apply(string) -> string` function can be used as normalizer
