@@ -254,6 +254,7 @@ test("big index", () => {
   });
 
   let iter = 10000;
+
   for (let i = 0; i < iter; i++) {
     ix.doIndex(
       [
@@ -267,6 +268,11 @@ test("big index", () => {
       ["name"]
     );
   }
+
+  // let t0 = +new Date();
+  // let top = ix.topN(new OR(ix.terms("name", "doe john")), 1);
+  // let took = new Date() - t0;
+  // console.log({ took });
 
   expect(ix.topN(new OR(ix.terms("name", "doe")), -1).length).toEqual(iter);
   expect(ix.topN(new OR(ix.terms("name", "world")), -1).length).toEqual(
