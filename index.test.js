@@ -209,6 +209,24 @@ test("bad input", () => {
   ).toEqual([{ name: "john bon `" }]);
 });
 
+test("empty", () => {
+  let ix = new Index({
+    name: analyzers.autocomplete,
+  });
+
+  ix.doIndex([{ name: "john bon `" }, { name: "bzbz" }], ["name"]);
+
+  expect(
+    ix.topN(
+      new DISMAX(0.5, new AND()),
+      new OR(),
+      new DISMAX(0.1),
+      -1,
+      new TERM(0, [])
+    )
+  ).toEqual([]);
+});
+
 test("big index", () => {
   let ix = new Index({
     name: analyzers.autocomplete,
