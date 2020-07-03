@@ -244,6 +244,7 @@ test("undefined limit", () => {
     { name: "john bon" },
     { name: "john don" },
   ]);
+  expect(ix.topN(new OR(...ix.terms("name", "john")), 0)).toEqual([]);
 });
 
 test("big index", () => {
