@@ -254,25 +254,36 @@ test("big index", () => {
   });
 
   let iter = 10000;
-
+  let forward = [];
   for (let i = 0; i < iter; i++) {
-    ix.doIndex(
-      [
-        { name: "john Crème Brulée", type: "user" },
-        { name: "john another with worse idf", type: "user" },
-        { name: "hello world k777bb k9 bzz", type: "user" },
-        { name: "jack", type: "admin" },
-        { name: "doe world" },
-        { name: "world" },
-      ],
-      ["name"]
-    );
+    let docs = [
+      { name: "john Crème Brulée", type: "user" },
+      { name: "john another with worse idf", type: "user" },
+      { name: "hello world k777bb k9 bzz", type: "user" },
+      { name: "jack", type: "admin" },
+      { name: "doe world" },
+      { name: "world" },
+    ];
+
+    ix.doIndex(docs, ["name"]);
+    forward = forward.concat(docs);
   }
 
-  // let t0 = +new Date();
-  // let top = ix.topN(new OR(ix.terms("name", "doe john")), 1);
-  // let took = new Date() - t0;
-  // console.log({ took });
+  //let t0 = +new Date();
+  //let top = ix.topN(new OR(ix.terms("name", "another")));
+  //expect(top.length).toEqual(iter);
+  //let took = new Date() - t0;
+  //console.log("inverted", { took });
+  //t0 = +new Date();
+  //top = [];
+  //for (let d of forward) {
+  //  if (d.name.match("another")) {
+  //    top.push(d);
+  //  }
+  //}
+  //expect(top.length).toEqual(iter);
+  //took = new Date() - t0;
+  //console.log("foreach", { took });
 
   expect(ix.topN(new OR(ix.terms("name", "doe")), -1).length).toEqual(iter);
   expect(ix.topN(new OR(ix.terms("name", "world")), -1).length).toEqual(
