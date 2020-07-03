@@ -190,6 +190,25 @@ test("many fields", () => {
   ).toEqual([{ first_name: "john bon", last_name: "jovi jr" }]);
 });
 
+test("bad input", () => {
+  let ix = new Index({
+    name: analyzers.autocomplete,
+  });
+
+  ix.doIndex([{ name: "john bon `" }, { name: "bzbz" }], ["name"]);
+
+  expect(
+    ix.topN(
+      new DISMAX(
+        0.5,
+        new AND(...ix.terms("name", "`")),
+        new AND(...ix.terms("name", "bon"))
+      ),
+      -1
+    )
+  ).toEqual([{ name: "john bon `" }]);
+});
+
 test("big index", () => {
   let ix = new Index({
     name: analyzers.autocomplete,

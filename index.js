@@ -217,10 +217,12 @@ const AND = function (...queries) {
   };
 
   this.next = function () {
+    if (!lead) return (this.docID = NO_MORE);
     return this._jump(lead.next());
   };
 
   this.jump = function (target) {
+    if (!lead) return (this.docID = NO_MORE);
     return this._jump(lead.jump(target));
   };
 
