@@ -154,6 +154,42 @@ test("soundex", () => {
   ]);
 });
 
+test("many fields", () => {
+  let ix = new Index({
+    first_name: analyzers.basic,
+    last_name: analyzers.basic,
+  });
+
+  ix.doIndex(
+    [
+      { first_name: "john bon", last_name: "jovi jr" },
+      { first_name: "aa bb cc", last_name: "dd ee" },
+    ],
+    ["first_name", "last_name"]
+  );
+
+  expect(
+    ix.topN(
+      new OR(
+        ...ix.terms("first_name", "john bon"),
+        ...ix.terms("last_name", "jovi")
+      ),
+      -1
+    )
+  ).toEqual([{ first_name: "john bon", last_name: "jovi jr" }]);
+
+  expect(
+    ix.topN(
+      new OR(
+        0.5,
+        new OR(...ix.terms("first_name", "john bon")),
+        new OR(...ix.terms("last_name", "jovi"))
+      ),
+      -1
+    )
+  ).toEqual([{ first_name: "john bon", last_name: "jovi jr" }]);
+});
+
 test("big index", () => {
   let ix = new Index({
     name: analyzers.autocomplete,

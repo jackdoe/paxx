@@ -1,5 +1,6 @@
 var unicode = require("./unicode");
 const NO_MORE = Number.MAX_VALUE;
+const NOT_READY = -1;
 
 // from https://gist.github.com/shawndumas/1262659
 const soundex = function (s) {
@@ -61,7 +62,7 @@ const addSubQueries = function (to, ...queries) {
 };
 
 const CONSTANT = function (boost, query) {
-  this.docID = -1;
+  this.docID = NOT_READY;
   this.score = function () {
     return boost;
   };
@@ -82,7 +83,7 @@ const CONSTANT = function (boost, query) {
 const OR = function (...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
-  this.docID = -1;
+  this.docID = NOT_READY;
   this.add = function (query) {
     if (query) this.push(query);
     return this;
@@ -110,6 +111,7 @@ const OR = function (...queries) {
 
   this.jump = function (target) {
     let new_doc = NO_MORE;
+
     for (let i = 0; i < this.length; i++) {
       let cur_doc = this[i].docID;
       if (cur_doc < target) cur_doc = this[i].jump(target);
@@ -130,7 +132,7 @@ const OR = function (...queries) {
 const DISMAX = function (tiebreaker, ...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
-  this.docID = -1;
+  this.docID = NOT_READY;
   this.add = function (query) {
     if (query) this.push(query);
     return this;
@@ -184,7 +186,7 @@ const AND = function (...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
   this.sort = Array.prototype.sort;
-  this.docID = -1;
+  this.docID = NOT_READY;
   let lead = undefined;
 
   this.add = function (query) {
@@ -239,15 +241,14 @@ const AND = function (...queries) {
 };
 
 const TERM = function (nDocumentsInIndex, postingsList) {
-  this.docID = -1;
+  this.docID = NOT_READY;
   this.idf = 1 + Math.log(nDocumentsInIndex / (postingsList.length + 1));
   let cursor = 0;
-
+  let postingsEnd = postingsList.length - 1;
   this.update = function () {
-    if (cursor > postingsList.length - 1) return (this.docID = NO_MORE);
+    if (cursor > postingsEnd) return (this.docID = NO_MORE);
 
-    let docID = postingsList[cursor];
-    return (this.docID = docID);
+    return (this.docID = postingsList[cursor]);
   };
 
   this.count = function () {
@@ -255,7 +256,7 @@ const TERM = function (nDocumentsInIndex, postingsList) {
   };
 
   this.next = function () {
-    if (this.docID !== -1) cursor++;
+    if (this.docID !== NOT_READY) cursor++;
 
     return this.update();
   };
@@ -441,12 +442,13 @@ let Index = function (perFieldAnalyzer) {
   };
 
   this.doIndex = function (documents, fields) {
-    for (let field of fields) {
-      let a = this.getAnalyzer(field);
-      let inv = inverted[field] || (inverted[field] = {});
+    for (let document of documents) {
+      let did = forward.length;
 
-      for (let document of documents) {
-        let did = forward.length;
+      for (let field of fields) {
+        let a = this.getAnalyzer(field);
+        let inv = inverted[field] || (inverted[field] = {});
+
         let tokens = a.analyzeForIndex(document[field]);
         for (let token of tokens) {
           let postings = inv[token] || (inv[token] = []);
@@ -455,8 +457,8 @@ let Index = function (perFieldAnalyzer) {
             postings.push(did);
           }
         }
-        forward.push(document);
       }
+      forward.push(document);
     }
   };
 
@@ -475,7 +477,7 @@ let Index = function (perFieldAnalyzer) {
   this.forEach = function (query, cb) {
     while (query.next() !== NO_MORE) {
       let score = query.score();
-      if (score > 0) cb(forward[query.docID], score);
+      cb(forward[query.docID], score);
     }
   };
 
