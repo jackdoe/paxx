@@ -133,6 +133,9 @@ const DISMAX = function (tiebreaker, ...queries) {
   this.prototype = new Array();
   this.push = Array.prototype.push;
   this.docID = NOT_READY;
+
+  if (!tiebreaker) tiebreaker = 0;
+
   this.add = function (query) {
     if (query) this.push(query);
     return this;
@@ -488,6 +491,8 @@ let Index = function (perFieldAnalyzer) {
     this.forEach(query, function (doc, score) {
       scored.push([doc, scorer ? scorer(doc, score) : score]);
     });
+
+    if (limit === undefined) limit = -1;
 
     // fixme: use priority queue
     scored.sort(function (a, b) {

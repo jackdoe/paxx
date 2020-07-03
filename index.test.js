@@ -219,13 +219,31 @@ test("empty", () => {
   expect(
     ix.topN(
       new OR(
-        new DISMAX(0.5, new AND()),
+        new AND(),
+        new DISMAX(0.5, new AND(), new OR(), new DISMAX()),
         new OR(),
         new DISMAX(0.1),
         new TERM(0, [])
-      )
+      ),
+      -1
     )
   ).toEqual([]);
+});
+
+test("undefined limit", () => {
+  let ix = new Index({
+    name: analyzers.autocomplete,
+  });
+
+  ix.doIndex(
+    [{ name: "john bon" }, { name: "john don" }, { name: "bzbz" }],
+    ["name"]
+  );
+
+  expect(ix.topN(new OR(...ix.terms("name", "john")))).toEqual([
+    { name: "john bon" },
+    { name: "john don" },
+  ]);
 });
 
 test("big index", () => {
