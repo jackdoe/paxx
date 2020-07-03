@@ -135,6 +135,25 @@ test("soundex", () => {
   ]);
 });
 
+test("soundex", () => {
+  let ix = new Index({
+    name: analyzers.basic,
+  });
+
+  ix.doIndex(
+    [
+      { name: "john Crème Brulée /a/b/c/え/d" },
+      { name: "bohn" },
+      { name: "johm johm johm" },
+    ],
+    ["name"]
+  );
+
+  expect(ix.topN(new OR(ix.terms("name", "え")), -1)).toEqual([
+    { name: "john Crème Brulée /a/b/c/え/d" },
+  ]);
+});
+
 test("big index", () => {
   let ix = new Index({
     name: analyzers.autocomplete,

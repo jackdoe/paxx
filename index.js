@@ -1,3 +1,4 @@
+var unicode = require("./unicode");
 const NO_MORE = Number.MAX_VALUE;
 
 // from https://gist.github.com/shawndumas/1262659
@@ -362,12 +363,20 @@ const _Nunaccent = function () {
   };
 };
 
+const nonalphanumeric = new RegExp("[^" + unicode.w + "]", "g");
+const _NremoveNonAlphanumeric = function () {
+  this.apply = function apply(s) {
+    return s.replace(nonalphanumeric, " ");
+  };
+};
+
 const _Nnoop = function () {
   this.apply = function apply(tokens) {
     return tokens;
   };
 };
 
+// FIXME: this works only on ascii
 const _NspaceBetweenDigits = function () {
   this.apply = function apply(tokens) {
     let digitMode = false;
@@ -521,6 +530,10 @@ const Nnoop = function () {
   return new _Nnoop();
 };
 
+const NremoveNonAlphanumeric = function () {
+  return new _NremoveNonAlphanumeric();
+};
+
 const Nunaccent = function () {
   return new _Nunaccent();
 };
@@ -548,19 +561,34 @@ const keywordAnalyzer = new analyzer({
 });
 
 const autocompleteAnalyzer = new analyzer({
-  normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
+  normalizers: [
+    Nlowercase(),
+    Nunaccent(),
+    NremoveNonAlphanumeric(),
+    NspaceBetweenDigits(),
+  ],
   indexTokenizers: [Twhitespace(), Tedge(1)],
   searchTokenizers: [Twhitespace()],
 });
 
 const soundexAnalyzer = new analyzer({
-  normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
+  normalizers: [
+    Nlowercase(),
+    Nunaccent(),
+    NremoveNonAlphanumeric(),
+    NspaceBetweenDigits(),
+  ],
   indexTokenizers: [Twhitespace(), Tsoundex()],
   searchTokenizers: [Twhitespace(), Tsoundex()],
 });
 
 const basicAnalyzer = new analyzer({
-  normalizers: [Nlowercase(), Nunaccent(), NspaceBetweenDigits()],
+  normalizers: [
+    Nlowercase(),
+    Nunaccent(),
+    NremoveNonAlphanumeric(),
+    NspaceBetweenDigits(),
+  ],
   indexTokenizers: [Twhitespace()],
   searchTokenizers: [Twhitespace()],
 });
@@ -585,6 +613,7 @@ module.exports = {
     lowercase: Nlowercase,
     spaceBetweenDigits: NspaceBetweenDigits,
     noop: Nnoop,
+    reomveNonAlphanumeric: NremoveNonAlphanumeric,
     unaccent: Nunaccent,
   },
 
