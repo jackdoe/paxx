@@ -115,7 +115,7 @@ test("hello and world scorer", () => {
   ).toEqual(expected);
 });
 
-test("soundex", () => {
+test("soundex johm", () => {
   let ix = new Index({
     name: analyzers.soundex,
   });
@@ -135,7 +135,29 @@ test("soundex", () => {
   ]);
 });
 
-test("soundex", () => {
+test("soundex johm", () => {
+  let ix = new Index({
+    name: analyzers.soundex,
+  });
+
+  ix.doIndex(
+    [
+      { name: "hello world" },
+      { name: "hellu world" },
+      { name: "helo world" },
+      { name: "helz world" },
+      { name: "goodbye world" },
+    ],
+    ["name"]
+  );
+  expect(ix.topN(new OR(ix.terms("name", "hallo")), -1)).toEqual([
+    { name: "hello world" },
+    { name: "hellu world" },
+    { name: "helo world" },
+  ]);
+});
+
+test("basic", () => {
   let ix = new Index({
     name: analyzers.basic,
   });
