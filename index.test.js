@@ -61,6 +61,49 @@ test("whitespace", () => {
   expect(t.edge(10).apply(["hello"])).toEqual(["hello"]);
 });
 
+test("ngram", () => {
+  expect(t.ngram(1, 3).apply(["hello", "good", "bye", "world"])).toEqual([
+    "hello",
+    "hellogood",
+    "hellogoodbye",
+    "good",
+    "goodbye",
+    "goodbyeworld",
+    "bye",
+    "byeworld",
+    "world",
+  ]);
+
+  expect(t.ngram(1, 5).apply(["hello", "good", "bye", "world"])).toEqual([
+    "hello",
+    "hellogood",
+    "hellogoodbye",
+    "hellogoodbyeworld",
+    "good",
+    "goodbye",
+    "goodbyeworld",
+    "bye",
+    "byeworld",
+    "world",
+  ]);
+
+  expect(t.ngram(2, 2).apply(["hello", "good", "bye", "world"])).toEqual([
+    "hellogood",
+    "goodbye",
+    "byeworld",
+  ]);
+
+  expect(t.ngram(1, 2).apply(["hello", "good", "bye", "world"])).toEqual([
+    "hello",
+    "hellogood",
+    "good",
+    "goodbye",
+    "bye",
+    "byeworld",
+    "world",
+  ]);
+});
+
 test("doe", () => {
   expect(ix.topN(new OR(...ix.terms("name", "doe")), -1)).toEqual([
     { name: "doe world", pop: 1000 },
@@ -250,6 +293,18 @@ test("empty", () => {
       -1
     )
   ).toEqual([]);
+});
+
+test("keyword", () => {
+  let ix = new Index({
+    name: analyzers.autocomplete,
+  });
+
+  ix.doIndex([{ name: "john bon" }, { name: "bzbz" }], ["name"]);
+
+  expect(ix.topN(new OR(...ix.terms("name", "johnb")))).toEqual([
+    { name: "john bon" },
+  ]);
 });
 
 test("undefined limit", () => {

@@ -357,6 +357,35 @@ const _Tedge = function (n) {
   };
 };
 
+const _Tngram = function (min, max) {
+  if (min <= 0) {
+    min = 1;
+  }
+  if (max < min) {
+    max = min;
+  }
+
+  min--;
+  max--;
+
+  this.apply = function apply(tokens) {
+    if (tokens.length < min) {
+      return tokens;
+    }
+    let out = [];
+    for (let i = 0; i < tokens.length; i++) {
+      for (let j = min; j <= max; j++) {
+        if (i + j >= tokens.length) {
+          break;
+        }
+        out.push(tokens.slice(i, i + j + 1).join(""));
+      }
+    }
+
+    return out;
+  };
+};
+
 const _Nlowercase = function () {
   this.apply = function apply(s) {
     return s.toLowerCase();
@@ -519,6 +548,10 @@ const Tsoundex = function () {
   return new _Tsoundex();
 };
 
+const Tngram = function (min, max) {
+  return new _Tngram(min, max);
+};
+
 const Tnoop = function (n) {
   return new _Tnoop(n);
 };
@@ -576,7 +609,7 @@ const autocompleteAnalyzer = new analyzer({
     NremoveNonAlphanumeric(),
     NspaceBetweenDigits(),
   ],
-  indexTokenizers: [Twhitespace(), Tedge(1)],
+  indexTokenizers: [Twhitespace(), Tngram(1, 2), Tedge(1)],
   searchTokenizers: [Twhitespace()],
 });
 
@@ -617,6 +650,7 @@ module.exports = {
     noop: Tnoop,
     soundex: Tsoundex,
     whitespace: Twhitespace,
+    ngram: Tngram,
   },
   n: {
     lowercase: Nlowercase,
