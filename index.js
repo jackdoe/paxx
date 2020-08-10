@@ -511,14 +511,14 @@ let Index = function (perFieldAnalyzer) {
   this.forEach = function (query, cb) {
     while (query.next() !== NO_MORE) {
       let score = query.score();
-      cb(forward[query.docID], score);
+      cb(forward[query.docID], score, query.docID);
     }
   };
 
   this.topN = function (query, limit, scorer) {
     let scored = [];
-    this.forEach(query, function (doc, score) {
-      scored.push([doc, scorer ? scorer(doc, score) : score]);
+    this.forEach(query, function (doc, score, docID) {
+      scored.push([doc, scorer ? scorer(doc, score, docID) : score]);
     });
 
     if (limit === undefined) limit = -1;
