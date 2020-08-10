@@ -158,6 +158,39 @@ test("hello and world scorer", () => {
   ).toEqual(expected);
 });
 
+test("insertion order", () => {
+  let ix = new Index({
+    name: analyzers.autocomplete,
+  });
+
+  ix.doIndex(
+    [{ name: "john" }, { name: "doe world" }, { name: "hello world" }],
+    ["name"]
+  );
+
+  let expected = [{ name: "doe world" }, { name: "hello world" }];
+  let expectedInvert = [{ name: "hello world" }, { name: "doe world" }];
+  expect(
+    ix.topN(new AND(...ix.terms("name", "world")), -1, function (
+      doc,
+      score,
+      docID
+    ) {
+      return -docID;
+    })
+  ).toEqual(expected);
+
+  expect(
+    ix.topN(new AND(...ix.terms("name", "world")), -1, function (
+      doc,
+      score,
+      docID
+    ) {
+      return docID;
+    })
+  ).toEqual(expectedInvert);
+});
+
 test("soundex johm", () => {
   let ix = new Index({
     name: analyzers.soundex,
