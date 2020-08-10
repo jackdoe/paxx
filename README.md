@@ -145,8 +145,8 @@ outputs:
 ```
 ix.forEach(
   new OR(0.5, ...ix.terms("name", "hello"), ...ix.terms("name", "world")),
-  function(doc, score) {
-    console.log({ doc, score });
+  function(doc, score, docID) {
+    console.log({ doc, score, docID });
   }
 );
 
@@ -158,8 +158,8 @@ ix.forEach(
     ...ix.terms("name", "hello"),
     new CONSTANT(1000, new OR(...ix.terms("name", "world")))
   ),
-  function(doc, score) {
-    console.log({ doc, score });
+  function(doc, score, docID) {
+    console.log({ doc, score, docID });
   }
 );
 
