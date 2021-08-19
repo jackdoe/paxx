@@ -495,7 +495,14 @@ let Index = function (perFieldAnalyzer) {
       forward.push(document);
     }
   };
-
+  this.serialize = function() {
+    return JSON.stringify({inverted: inverted, forward: forward})
+  }
+  this.deserialize = function(blob) {
+    data = JSON.parse(blob)
+    inverted = data.inverted
+    forward = data.forward
+  }
   this.terms = function (field, token) {
     let out = [];
     let a = this.getAnalyzer(field);

@@ -14,6 +14,10 @@ let ix = new Index({
   name: analyzers.autocomplete,
   type: analyzers.keyword,
 });
+let ix2 = new Index({
+  name: analyzers.autocomplete,
+  type: analyzers.keyword,
+});
 
 ix.doIndex(
   [
@@ -25,6 +29,9 @@ ix.doIndex(
   ],
   ["name"]
 );
+
+
+ix2.deserialize(ix.serialize())
 
 test("lowercase", () => {
   expect(n.lowercase().apply("ABC")).toEqual("abc");
@@ -149,10 +156,18 @@ test("hello and world", () => {
 
 test("hello and world scorer", () => {
   let query = new AND(...ix.terms("name", "w"));
+  let query2 = new AND(...ix2.terms("name", "w"));
+
   let expected = [{ name: "doe world", pop: 1000 }];
 
   expect(
     ix.topN(query, 1, function (doc, score) {
+      return doc.pop;
+    })
+  ).toEqual(expected);
+
+  expect(
+    ix2.topN(query2, 1, function (doc, score) {
       return doc.pop;
     })
   ).toEqual(expected);
