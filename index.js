@@ -495,8 +495,12 @@ let Index = function (perFieldAnalyzer) {
       forward.push(document);
     }
   };
+
   this.serialize = function() {
     return JSON.stringify({inverted: inverted, forward: forward})
+  }
+  this.shallow = function() {
+    return {inverted, forward}
   }
   this.deserialize = function(blob) {
     data = JSON.parse(blob)
