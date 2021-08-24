@@ -212,7 +212,7 @@ const AND = function (...queries) {
       let n = this[i].jump(target);
       if (n > target) {
         target = lead.jump(n);
-        i = 1;
+        i = 0;
       }
     }
 
