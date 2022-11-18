@@ -485,7 +485,10 @@ let Index = function (perFieldAnalyzer) {
 
         let tokens = a.analyzeForIndex(document[field]);
         for (let token of tokens) {
-          let postings = inv[token] || (inv[token] = []);
+          let postings = inv[token];
+          if (!Array.isArray(postings)) {
+            postings = inv[token] = [];
+          }
           // only insert if not the same as previous, we dont count frequency
           if (postings.length == 0 || postings[postings.length - 1] != did) {
             postings.push(did);
